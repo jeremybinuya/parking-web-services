@@ -1,11 +1,9 @@
 package com.parking.web.services.service;
 
-import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -30,7 +28,6 @@ public class ParkingService {
 
 	// TODO: Harcoded Parking Lot spaces
 	static {
-
 		String[] parkingSize = { "SP", "MP", "LP" };
 		Random r = new Random();
 		boolean isZero;
@@ -151,14 +148,24 @@ public class ParkingService {
 	public String unParkCar(int row, int col) {
 		String parkdescription = findByParking(row, col).getParkDescription();
 		LocalDateTime startParking = findByParking(row, col).getStartParking();
-		LocalDateTime now = LocalDateTime.now();
 
-		long diffTime = ChronoUnit.MILLIS.between(startParking, now);
-
-		System.out.println(diffTime);
-		long remainingTime = diffTime;
-		long t24 = 1000 * 60 * 24;
-		long t1h = 1000 * 60 * 24;
+		long  diffTime = ChronoUnit.MILLIS.between(
+				LocalDateTime.of(startParking.getYear(), startParking.getMonth(), startParking.getDayOfMonth(),
+						startParking.getHour(), startParking.getMinute(),startParking.getSecond(),startParking.getNano()),
+				LocalDateTime.of(LocalDateTime.now().getYear(), LocalDateTime.now().getMonth(), LocalDateTime.now().getDayOfMonth(),
+						LocalDateTime.now().getHour(), LocalDateTime.now().getMinute(),startParking.getSecond(),startParking.getNano()));
+		
+		long  remainingTime = diffTime;
+		long  milliseconds24h = ChronoUnit.MILLIS.between(
+				LocalDateTime.of(LocalDate.now().getYear(), LocalDate.now().getMonth(), LocalDate.now().getDayOfMonth(),
+						00, 00),
+				LocalDateTime.of(LocalDate.now().getYear(), LocalDate.now().getMonth(),
+						LocalDate.now().plusDays(1).getDayOfMonth(), 00, 00));
+		long  milliseconds1h = ChronoUnit.MILLIS.between(
+				LocalDateTime.of(LocalDate.now().getYear(), LocalDate.now().getMonth(), LocalDate.now().getDayOfMonth(),
+						00, 00),
+				LocalDateTime.of(LocalDate.now().getYear(), LocalDate.now().getMonth(), LocalDate.now().getDayOfMonth(),
+						01, 00));
 
 		double charges = 0;
 
@@ -172,20 +179,24 @@ public class ParkingService {
 			hourlyCharge = 100;
 		}
 
-		if (remainingTime > t24) {
-			long n24 = (remainingTime / t24);
+		if (remainingTime > milliseconds24h) {
+			float  n24 = (remainingTime / milliseconds24h);
 			charges += n24 * 5000;
-			diffTime -= (n24 * t24);
+			diffTime -= (n24 * milliseconds24h);
 		}
 
-		if (remainingTime > (t1h * 3)) {
-			remainingTime -= (t1h * 3);
+		if (remainingTime > (milliseconds1h * 3)) {
+			remainingTime -= (milliseconds1h * 3);
 			charges += 40;
 		}
-
+		
+//		System.out.println(remainingTime);
+//		System.out.println(milliseconds1h);
+//		System.out.println((double) remainingTime / milliseconds1h);
+		
 		if (remainingTime > 0) {
-			long remainingHours = (long) Math.ceil(remainingTime / t1h);
-			charges += remainingHours * hourlyCharge;
+			double  remainingHours = Math.ceil(((double) remainingTime / milliseconds1h));
+			charges +=  remainingHours * hourlyCharge;
 		}
 
 		parkingSlots.remove(findByParking(row, col));
